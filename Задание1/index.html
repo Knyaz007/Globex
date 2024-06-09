@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>User Report</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f9;
+            color: #333;
+            margin: 0;
+            padding: 20px;
+            box-sizing: border-box;
+        }
+        h1 {
+            text-align: center;
+            color: #444;
+        }
+        #search {
+            display: block;
+            margin: 0 auto 20px auto;
+            padding: 10px;
+            width: 80%;
+            max-width: 400px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+        }
+        #user-list {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+        .user-card {
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            padding: 15px;
+            margin: 10px;
+            cursor: pointer;
+            background: #fff;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            transition: transform 0.2s;
+            flex-basis: calc(25% - 20px); /* 25% minus margin */
+            max-width: calc(25% - 20px); /* 25% minus margin */
+            box-sizing: border-box;
+        }
+        .user-card:hover {
+            transform: scale(1.05);
+        }
+        .popup {
+            display: none;
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: white;
+            padding: 20px;
+            border: 1px solid #ccc;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+            z-index: 1001;
+            width: 90%;
+            max-width: 400px;
+            border-radius: 10px;
+        }
+        .popup.active {
+            display: block;
+        }
+        .popup-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            z-index: 1000;
+        }
+        .popup-overlay.active {
+            display: block;
+        }
+        #close-popup {
+            display: block;
+            margin: 10px auto 0 auto;
+            padding: 10px 20px;
+            border: none;
+            background: #007BFF;
+            color: white;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        #close-popup:hover {
+            background: #0056b3;
+        }
+        /* Additional styles for popup content */
+        #popup-content {
+            max-height: 300px;
+            overflow-y: auto;
+            padding-right: 20px;
+        }
+        h2 {
+            margin-bottom: 10px;
+            color: #007BFF;
+        }
+        p {
+            margin-bottom: 8px;
+        }
+        strong {
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+    <h1>User Report</h1>
+    <input type="text" id="search" placeholder="Search users...">
+    <div id="user-list"></div>
+
+    <div id="popup-overlay" class="popup-overlay"></div>
+    <div id="popup" class="popup">
+        <div id="popup-content"></div>
+        <button id="close-popup">Close</button>
+    </div>
+
+    <script>
+        const apiUrl = 'http://localhost:3000';
+        const userListElement = document.getElementById('user-list');
+        const searchInput = document.getElementById('search');
+        const popupOverlay = document.getElementById('popup-overlay');
+        const popup = document.getElementById('popup');
+        const popupContent = document.getElementById('popup-content');
+        const closePopupButton = document.getElementById('close-popup');
+
+        async function fetchUsers(query = '') {
+            try {
+                const response = await fetch(`${apiUrl}?term=${query}`);
+                if (!response.ok) throw new Error('Network response was not ok');
+                const users = await response.json();
+                renderUserList(users);
+            } catch (error) {
+                console.error('Fetch error:', error);
+            }
+        }
+
+        function renderUserList(users) {
+            userListElement.innerHTML = '';
+            if (users.length === 0) {
+                userListElement.innerHTML = '<p>No users found.</p>';
+                return;
+            }
+           users.forEach(user => {
+    const userCard = document.createElement('div');
+    userCard.classList.add('user-card');
+
+    // Создаем отдельные элементы для имени, телефона и email
+    const nameElement = document.createElement('p');
+    nameElement.textContent = `Имя: ${user.name}`;
+    userCard.appendChild(nameElement);
+
+    const phoneElement = document.createElement('p');
+    phoneElement.textContent = `Телефон: ${user.phone}`;
+    userCard.appendChild(phoneElement);
+
+    const emailElement = document.createElement('p');
+    emailElement.textContent = `Email: ${user.email}`;
+    userCard.appendChild(emailElement);
+
+    userCard.addEventListener('click', () => showUserDetails(user));
+    userListElement.appendChild(userCard);
+});
+
+        }
+
+        function showUserDetails(user) {
+            popupContent.innerHTML = `
+                <h2>${user.name}</h2>
+                <p><strong>Email:</strong> ${user.email}</p>
+                <p><strong>Phone:</strong> ${user.phone}</p>
+                <p><strong>Address:</strong> ${user.address}</p>
+                <p><strong>Position:</strong> ${user.position_name}</p>
+                <p><strong>Department:</strong> ${user.department}</p>
+                <p><strong>Hire Date:</strong> ${user.hire_date}</p>
+            `;
+            popupOverlay.classList.add('active');
+            popup.classList.add('active');
+        }
+
+        function closePopup() {
+            popupOverlay.classList.remove('active');
+            popup.classList.remove('active');
+        }
+
+        searchInput.addEventListener('input', () => {
+            fetchUsers(searchInput.value);
+        });
+
+        popupOverlay.addEventListener('click', closePopup);
+        closePopupButton.addEventListener('click', closePopup);
+
+        fetchUsers();
+    </script>
+</body>
+</html>
